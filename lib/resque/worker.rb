@@ -377,6 +377,11 @@ module Resque
           trap('USR1') { kill_child }
         end
         trap('USR2') { pause_processing }
+        trap('HUP') {
+          pause_processing('HUP')
+          run_hook :on_refresh_from_child
+          unpause_processing('HUP')
+        }
         trap('CONT') { unpause_processing }
       rescue ArgumentError
         warn "Signals QUIT, USR1, USR2, and/or CONT not supported."
@@ -398,6 +403,7 @@ module Resque
         trap('QUIT', 'DEFAULT')
         trap('USR1', 'DEFAULT')
         trap('USR2', 'DEFAULT')
+        trap('HUP', 'DEFAULT')
       rescue ArgumentError
       end
     end
@@ -467,14 +473,14 @@ module Resque
 
     # Stop processing jobs after the current one has completed (if we're
     # currently running one).
-    def pause_processing
-      log "USR2 received; pausing job processing"
+    def pause_processing(sig_name = 'USR2')
+      log "#{sig_name} received; pausing job processing"
       @paused = true
     end
 
     # Start processing jobs again after a pause
-    def unpause_processing
-      log "CONT received; resuming job processing"
+    def unpause_processing(sig_name = 'CONT')
+      log "#{sig_name} received; resuming job processing"
       @paused = false
     end
 
