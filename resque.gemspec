@@ -2,13 +2,13 @@ $LOAD_PATH.unshift 'lib'
 require 'resque/version'
 
 Gem::Specification.new do |s|
-  s.name              = "resque"
+  s.name              = "resque_signal_from_child"
   s.version           = Resque::Version
   s.date              = Time.now.strftime('%Y-%m-%d')
-  s.summary           = "Resque is a Redis-backed queueing system."
+  s.summary           = "Fork of Resque with added signal from child handler passed to parent."
   s.homepage          = "http://github.com/defunkt/resque"
-  s.email             = "chris@ozmm.org"
-  s.authors           = [ "Chris Wanstrath", "Steve Klabnik", "Terence Lee" ]
+  s.email             = "https://github.com/prytnar/resque.git"
+  s.authors           = [ "Marek Bytnar", "Maciek Dubinski" ]
 
   s.files             = %w( README.markdown Rakefile LICENSE HISTORY.md )
   s.files            += Dir.glob("lib/**/*")
