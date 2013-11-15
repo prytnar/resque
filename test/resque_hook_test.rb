@@ -8,9 +8,9 @@ describe "Resque Hooks" do
     Resque.before_first_fork = nil
     Resque.before_fork = nil
     Resque.after_fork = nil
-
+    Resque.on_refresh_from_child = nil
+    
     @worker = Resque::Worker.new(:jobs)
-
     $called = false
 
     class CallNotifyJob
@@ -24,13 +24,14 @@ describe "Resque Hooks" do
     assert_equal [], Resque.before_first_fork
     assert_equal [], Resque.before_fork
     assert_equal [], Resque.after_fork
+    assert_equal [], Resque.on_refresh_from_child
   end
 
   it 'it calls before_first_fork once' do
     counter = 0
 
     Resque.before_first_fork { counter += 1 }
-    2.times { Resque::Job.create(:jobs, CallNotifyJob) }
+    Resque::Job.create(:jobs, CallNotifyJob)
 
     assert_equal(0, counter)
     @worker.work(0)
@@ -92,6 +93,30 @@ describe "Resque Hooks" do
 
     Resque::Job.create(:jobs, CallNotifyJob)
     @worker.work(0)
+  end
+
+  it 'it calls on_refresh_from_child on signal' do
+    begin
+      file = Tempfile.new("resque_on_refresh_from_child")
+
+      Resque.on_refresh_from_child {
+        File.open(file.path, "w") {|f| f.write(99)}
+      }
+
+      Resque::Job.create(:jobs, CallNotifyJob)
+
+      pid = fork do 
+        Resque.redis.client.reconnect
+        @worker.work(0)
+      end
+      Process.kill('HUP', pid)
+      Process.waitpid(pid)
+
+      val = File.read(file.path).strip.to_i
+      assert_equal(99, val)
+    ensure
+      file.delete
+    end  
   end
 
   it 'it registers multiple before_first_forks' do

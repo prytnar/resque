@@ -180,6 +180,14 @@ module Resque
   # Set the after_continue proc.
   attr_writer :after_pause
 
+  def on_refresh_from_child(&block)
+    block ? register_hook(:on_refresh_from_child, block) : hooks(:on_refresh_from_child)
+  end
+
+  def on_refresh_from_child=(block)
+    register_hook(:on_refresh_from_child, block)
+  end
+
   def to_s
     "Resque Client connected to #{redis_id}"
   end
